@@ -1,0 +1,427 @@
+# Monitoring Configuration for Reversible Meta-Synthesis Service
+
+# Prometheus Configuration
+prometheus:
+  scrape_interval: 15s   # How frequently to scrape targets
+  evaluation_interval: 15s  # How frequently to evaluate rules
+  
+  # Alertmanager configuration
+  alerting:
+    alertmanagers:
+      - static_configs:
+          - targets: ['alertmanager:9093']
+  
+  # Rule files
+  rule_files:
+    - /etc/prometheus/rules/*.yml
+  
+  # Scrape configurations
+  scrape_configs:
+    # API Gateway monitoring
+    - job_name: 'api-gateway'
+      metrics_path: /metrics
+      static_configs:
+        - targets: ['api-gateway:8080']
+    
+    # Synthesis service monitoring
+    - job_name: 'synthesis-service'
+      metrics_path: /metrics
+      static_configs:
+        - targets: ['synthesis-service:8000']
+      
+    # Worker monitoring
+    - job_name: 'synthesis-workers'
+      metrics_path: /metrics
+      dns_sd_configs:
+        - names:
+            - 'worker.synthesis.svc.cluster.local'
+          type: 'A'
+          port: 8000
+    
+    # Database monitoring
+    - job_name: 'postgres-exporter'
+      static_configs:
+        - targets: ['postgres-exporter:9187']
+    
+    # Node monitoring
+    - job_name: 'node-exporter'
+      static_configs:
+        - targets: ['node-exporter:9100']
+    
+    # Kubernetes monitoring
+    - job_name: 'kubernetes-apiservers'
+      kubernetes_sd_configs:
+        - role: endpoints
+      scheme: https
+      tls_config:
+        ca_file: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+      bearer_token_file: /var/run/secrets/kubernetes.io/serviceaccount/token
+      relabel_configs:
+        - source_labels: [__meta_kubernetes_namespace, __meta_kubernetes_service_name, __meta_kubernetes_endpoint_port_name]
+          action: keep
+          regex: default;kubernetes;https
+    
+    # Redis monitoring
+    - job_name: 'redis-exporter'
+      static_configs:
+        - targets: ['redis-exporter:9121']
+
+# Alertmanager Configuration
+alertmanager:
+  route:
+    group_by: ['alertname', 'cluster', 'service']
+    group_wait: 30s
+    group_interval: 5m
+    repeat_interval: 4h
+    receiver: 'synthesis-team'
+    routes:
+      - match:
+          severity: critical
+        receiver: 'synthesis-team-pager'
+        continue: true
+  
+  receivers:
+    - name: 'synthesis-team'
+      email_configs:
+        - to: 'team@reversible-meta-synthesis.com'
+          send_resolved: true
+      slack_configs:
+        - api_url: 'https://hooks.slack.com/services/YOUR_SLACK_WEBHOOK'
+          channel: '#synthesis-alerts'
+          send_resolved: true
+          title: '{{ template "slack.default.title" . }}'
+          text: '{{ template "slack.default.text" . }}'
+    
+    - name: 'synthesis-team-pager'
+      pagerduty_configs:
+        - service_key: 'YOUR_PAGERDUTY_SERVICE_KEY'
+          send_resolved: true
+
+# Alert Rules
+rules:
+  # Synthesis Service Health
+  - name: synthesis-service.rules
+    rules:
+      - alert: SynthesisServiceDown
+        expr: up{job="synthesis-service"} == 0
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Synthesis service is down"
+          description: "The synthesis service instance {{ $labels.instance }} has been down for more than 2 minutes."
+      
+      - alert: HighSynthesisLatency
+        expr: histogram_quantile(0.95, sum(rate(synthesis_job_duration_seconds_bucket[5m])) by (le)) > 300
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High synthesis latency"
+          description: "95th percentile synthesis time is above 5 minutes (300s) for the last 5 minutes."
+      
+      - alert: LowSynthesisSuccessRate
+        expr: (sum(rate(synthesis_success_total[1h])) / sum(rate(synthesis_attempts_total[1h]))) < 0.8
+        for: 15m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Low synthesis success rate"
+          description: "Synthesis success rate has dropped below 80% for the last 15 minutes."
+  
+  # Worker Health
+  - name: synthesis-workers.rules
+    rules:
+      - alert: WorkerDown
+        expr: up{job="synthesis-workers"} == 0
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Synthesis worker is down"
+          description: "The synthesis worker {{ $labels.instance }} has been down for more than 2 minutes."
+      
+      - alert: HighWorkerLoad
+        expr: sum(rate(synthesis_job_duration_seconds_sum[5m])) by (instance) / sum(rate(synthesis_job_duration_seconds_count[5m])) by (instance) > 0.8
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High worker load"
+          description: "The synthesis worker {{ $labels.instance }} has been under high load (>80% utilization) for the last 10 minutes."
+  
+  # Database Health
+  - name: database.rules
+    rules:
+      - alert: DatabaseDown
+        expr: pg_up{job="postgres-exporter"} == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Database is down"
+          description: "The synthesis database has been down for more than 1 minute."
+      
+      - alert: HighDatabaseLoad
+        expr: rate(pg_stat_database_xact_commit{datname="synthesis"}[1m]) + rate(pg_stat_database_xact_rollback{datname="synthesis"}[1m]) > 1000
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High database load"
+          description: "The synthesis database is experiencing high transaction rate (>1000 TPS) for the last 5 minutes."
+      
+      - alert: LowDatabaseConnections
+        expr: sum(pg_stat_database_numbackends{datname="synthesis"}) < 5
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Low database connections"
+          description: "The synthesis database has fewer than 5 connections for the last 5 minutes, indicating potential connectivity issues."
+  
+  # System Health
+  - name: system.rules
+    rules:
+      - alert: HighCPULoad
+        expr: 100 - (avg by (instance) (irate(node_cpu_seconds_total{mode="idle"}[5m])) * 100) > 80
+        for: 15m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High CPU load"
+          description: "CPU load on {{ $labels.instance }} is above 80% for the last 15 minutes."
+      
+      - alert: HighMemoryUsage
+        expr: (node_memory_MemTotal_bytes - node_memory_MemAvailable_bytes) / node_memory_MemTotal_bytes * 100 > 85
+        for: 15m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High memory usage"
+          description: "Memory usage on {{ $labels.instance }} is above 85% for the last 15 minutes."
+      
+      - alert: DiskWillFillIn24Hours
+        expr: predict_linear(node_filesystem_free_bytes{mountpoint="/"}[1h], 24 * 3600) < 0
+        for: 30m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Disk will fill in 24 hours"
+          description: "Disk on {{ $labels.instance }} is predicted to fill up within 24 hours."
+
+# Grafana Dashboard Configuration
+grafana:
+  dashboards:
+    - name: "Synthesis Service Overview"
+      uid: "synthesis-overview"
+      panels:
+        - title: "Synthesis Jobs"
+          type: "graph"
+          targets:
+            - expr: "sum(rate(synthesis_attempts_total[5m])) by (language, explanation_level)"
+          gridPos:
+            h: 9
+            w: 12
+            x: 0
+            y: 0
+        
+        - title: "Success Rate"
+          type: "gauge"
+          targets:
+            - expr: "sum(rate(synthesis_success_total[1h])) / sum(rate(synthesis_attempts_total[1h]))"
+          gridPos:
+            h: 9
+            w: 6
+            x: 12
+            y: 0
+        
+        - title: "Synthesis Time"
+          type: "graph"
+          targets:
+            - expr: "histogram_quantile(0.95, sum(rate(synthesis_job_duration_seconds_bucket[5m])) by (le))"
+            - expr: "histogram_quantile(0.50, sum(rate(synthesis_job_duration_seconds_bucket[5m])) by (le))"
+          gridPos:
+            h: 9
+            w: 6
+            x: 18
+            y: 0
+        
+        - title: "Worker CPU Usage"
+          type: "graph"
+          targets:
+            - expr: "sum(rate(process_cpu_seconds_total{job=\"synthesis-workers\"}[1m])) by (instance)"
+          gridPos:
+            h: 9
+            w: 12
+            x: 0
+            y: 9
+        
+        - title: "Worker Memory Usage"
+          type: "graph"
+          targets:
+            - expr: "process_resident_memory_bytes{job=\"synthesis-workers\"}"
+          gridPos:
+            h: 9
+            w: 12
+            x: 12
+            y: 9
+    
+    - name: "Database Performance"
+      uid: "synthesis-database"
+      panels:
+        - title: "Database Transactions"
+          type: "graph"
+          targets:
+            - expr: "rate(pg_stat_database_xact_commit{datname=\"synthesis\"}[1m])"
+            - expr: "rate(pg_stat_database_xact_rollback{datname=\"synthesis\"}[1m])"
+          gridPos:
+            h: 9
+            w: 12
+            x: 0
+            y: 0
+        
+        - title: "Database Connections"
+          type: "graph"
+          targets:
+            - expr: "pg_stat_database_numbackends{datname=\"synthesis\"}"
+          gridPos:
+            h: 9
+            w: 12
+            x: 12
+            y: 0
+        
+        - title: "Cache Hit Ratio"
+          type: "graph"
+          targets:
+            - expr: "pg_stat_database_blks_hit{datname=\"synthesis\"} / (pg_stat_database_blks_hit{datname=\"synthesis\"} + pg_stat_database_blks_read{datname=\"synthesis\"})"
+          gridPos:
+            h: 9
+            w: 12
+            x: 0
+            y: 9
+        
+        - title: "Slow Queries"
+          type: "graph"
+          targets:
+            - expr: "rate(synthesis_db_slow_queries_total[5m])"
+          gridPos:
+            h: 9
+            w: 12
+            x: 12
+            y: 9
+
+# Custom metrics for synthesis service
+custom_metrics:
+  # Synthesis job metrics
+  - name: synthesis_attempts_total
+    type: counter
+    help: "Total number of synthesis attempts"
+    labels:
+      - language
+      - explanation_level
+  
+  - name: synthesis_success_total
+    type: counter
+    help: "Total number of successful syntheses"
+    labels:
+      - language
+      - explanation_level
+  
+  - name: synthesis_job_duration_seconds
+    type: histogram
+    help: "Duration of synthesis jobs in seconds"
+    labels:
+      - language
+      - explanation_level
+    buckets: [1, 5, 10, 30, 60, 120, 300, 600, 1800, 3600]
+  
+  # Resource usage metrics
+  - name: synthesis_worker_memory_usage_bytes
+    type: gauge
+    help: "Memory usage of synthesis worker in bytes"
+    labels:
+      - worker_id
+  
+  - name: synthesis_worker_cpu_usage
+    type: gauge
+    help: "CPU usage of synthesis worker as a percentage"
+    labels:
+      - worker_id
+  
+  # Program complexity metrics
+  - name: synthesis_program_complexity
+    type: histogram
+    help: "Complexity of synthesized programs"
+    labels:
+      - language
+      - explanation_level
+    buckets: [1, 2, 3, 5, 8, 13, 21, 34, 55]
+  
+  # Explanation tree metrics
+  - name: synthesis_explanation_tree_size
+    type: histogram
+    help: "Size of explanation trees in nodes"
+    labels:
+      - language
+      - explanation_level
+    buckets: [10, 20, 50, 100, 200, 500, 1000, 2000, 5000]
+  
+  # Queue metrics
+  - name: synthesis_queue_size
+    type: gauge
+    help: "Number of jobs in the synthesis queue"
+  
+  - name: synthesis_queue_wait_time_seconds
+    type: histogram
+    help: "Wait time in the synthesis queue in seconds"
+    buckets: [1, 5, 15, 30, 60, 120, 300, 600]
+
+# Log monitoring configuration
+loki:
+  scrape_configs:
+    - job_name: synthesis-service-logs
+      static_configs:
+        - targets:
+            - localhost
+          labels:
+            job: synthesis-service
+            __path__: /var/log/synthesis-service/*.log
+    
+    - job_name: synthesis-worker-logs
+      static_configs:
+        - targets:
+            - localhost
+          labels:
+            job: synthesis-worker
+            __path__: /var/log/synthesis-worker/*.log
+    
+    - job_name: database-logs
+      static_configs:
+        - targets:
+            - localhost
+          labels:
+            job: postgres
+            __path__: /var/log/postgresql/*.log
+
+# Log alerting rules
+log_alerts:
+  - name: synthesis-service-errors
+    expr: |
+      sum(count_over_time({job="synthesis-service"} |~ "(?i)error"[15m])) > 10
+    for: 5m
+    labels:
+      severity: warning
+    annotations:
+      summary: "High error rate in synthesis service logs"
+      description: "More than 10 error log entries in the last 15 minutes"
+  
+  - name: synthesis-worker-critical
+    expr: |
+      sum(count_over_time({job="synthesis-worker"} |~ "(?i)critical"[15m])) > 0
+    for: 1m
+    labels:
+      severity: critical
+    annotations:
+      summary: "Critical error in synthesis worker"
+      description: "Critical error detected in synthesis worker logs"

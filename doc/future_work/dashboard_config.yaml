@@ -1,0 +1,436 @@
+# Dashboard Generator Configuration for Reversible Meta-Synthesis Service
+
+# Grafana Configuration
+grafana:
+  url: http://grafana.reversible-meta-synthesis.com
+  api_key: YOUR_GRAFANA_API_KEY
+  auto_upload: false
+
+# Dashboard Configuration
+dashboards:
+  output_dir: /var/data/synthesis/dashboards
+  
+  definitions:
+    # Synthesis Service Overview Dashboard
+    - title: Synthesis Service Overview
+      uid: synthesis-overview
+      description: Overview of the Reversible Meta-Synthesis service
+      tags:
+        - synthesis
+        - overview
+      folder: Synthesis Monitoring
+      panels:
+        # Synthesis Jobs
+        - title: Synthesis Jobs
+          type: graph
+          gridPos:
+            h: 8
+            w: 12
+            x: 0
+            y: 0
+          targets:
+            - expr: sum(rate(synthesis_attempts_total[5m])) by (language)
+              legend: "{{language}}"
+          unit: jobs/s
+          yAxis:
+            label: Jobs per second
+        
+        # Success Rate
+        - title: Synthesis Success Rate
+          type: gauge
+          gridPos:
+            h: 8
+            w: 6
+            x: 12
+            y: 0
+          targets:
+            - expr: sum(rate(synthesis_success_total[1h])) / sum(rate(synthesis_attempts_total[1h]))
+          min: 0
+          max: 1
+          unit: percentunit
+          thresholds:
+            - value: null
+              color: red
+            - value: 0.7
+              color: orange
+            - value: 0.9
+              color: green
+        
+        # Synthesis Time
+        - title: Synthesis Time (95th Percentile)
+          type: graph
+          gridPos:
+            h: 8
+            w: 6
+            x: 18
+            y: 0
+          targets:
+            - expr: histogram_quantile(0.95, sum(rate(synthesis_job_duration_seconds_bucket[5m])) by (le, language, explanation_level))
+              legend: "{{language}} (level {{explanation_level}})"
+          unit: s
+          yAxis:
+            label: Seconds
+        
+        # Queue Size
+        - title: Queue Size
+          type: stat
+          gridPos:
+            h: 4
+            w: 6
+            x: 0
+            y: 8
+          targets:
+            - expr: synthesis_queue_size
+          colorMode: value
+          graphMode: area
+          textMode: value
+        
+        # Active Jobs
+        - title: Active Jobs
+          type: stat
+          gridPos:
+            h: 4
+            w: 6
+            x: 6
+            y: 8
+          targets:
+            - expr: count(synthesis_worker_cpu_usage)
+          colorMode: value
+          graphMode: area
+          textMode: value
+        
+        # Program Complexity
+        - title: Program Complexity
+          type: graph
+          gridPos:
+            h: 8
+            w: 12
+            x: 12
+            y: 8
+          targets:
+            - expr: histogram_quantile(0.5, sum(rate(synthesis_program_complexity_bucket[1h])) by (le, language))
+              legend: "{{language}} (median)"
+          unit: none
+          yAxis:
+            label: Complexity Score
+        
+        # Worker CPU Usage
+        - title: Worker CPU Usage
+          type: graph
+          gridPos:
+            h: 8
+            w: 12
+            x: 0
+            y: 12
+          targets:
+            - expr: synthesis_worker_cpu_usage
+              legend: "{{worker_id}}"
+          unit: percent
+          yAxis:
+            label: CPU Usage
+        
+        # Worker Memory Usage
+        - title: Worker Memory Usage
+          type: graph
+          gridPos:
+            h: 8
+            w: 12
+            x: 12
+            y: 12
+          targets:
+            - expr: synthesis_worker_memory_usage_bytes / 1024 / 1024
+              legend: "{{worker_id}}"
+          unit: megabytes
+          yAxis:
+            label: Memory Usage (MB)
+        
+        # Success Rate by Language
+        - title: Success Rate by Language
+          type: table
+          gridPos:
+            h: 8
+            w: 12
+            x: 0
+            y: 20
+          targets:
+            - expr: sum by (language) (rate(synthesis_success_total[24h])) / sum by (language) (rate(synthesis_attempts_total[24h]))
+              instant: true
+        
+        # Average Synthesis Time by Language and Level
+        - title: Average Synthesis Time by Language and Level
+          type: table
+          gridPos:
+            h: 8
+            w: 12
+            x: 12
+            y: 20
+          targets:
+            - expr: avg by (language, explanation_level) (rate(synthesis_job_duration_seconds_sum[24h]) / rate(synthesis_job_duration_seconds_count[24h]))
+              instant: true
+        
+        # Explanation Tree Size Heatmap
+        - title: Explanation Tree Size Distribution
+          type: heatmap
+          gridPos:
+            h: 8
+            w: 24
+            x: 0
+            y: 28
+          targets:
+            - expr: sum(rate(synthesis_explanation_tree_size_bucket[1h])) by (le, explanation_level)
+              legend: "Level {{explanation_level}}"
+          yAxisUnit: none
+          colorScheme: Blues
+    
+    # Database Performance Dashboard
+    - title: Database Performance
+      uid: synthesis-database
+      description: Performance metrics for the synthesis database
+      tags:
+        - synthesis
+        - database
+      folder: Synthesis Monitoring
+      panels:
+        # Database Transactions
+        - title: Database Transactions
+          type: graph
+          gridPos:
+            h: 8
+            w: 12
+            x: 0
+            y: 0
+          targets:
+            - expr: rate(pg_stat_database_xact_commit{datname="synthesis"}[1m])
+              legend: "Commits"
+            - expr: rate(pg_stat_database_xact_rollback{datname="synthesis"}[1m])
+              legend: "Rollbacks"
+          unit: ops/s
+          yAxis:
+            label: Transactions per second
+        
+        # Database Connections
+        - title: Database Connections
+          type: graph
+          gridPos:
+            h: 8
+            w: 12
+            x: 12
+            y: 0
+          targets:
+            - expr: pg_stat_database_numbackends{datname="synthesis"}
+          unit: conns
+          yAxis:
+            label: Active Connections
+        
+        # Cache Hit Ratio
+        - title: Cache Hit Ratio
+          type: gauge
+          gridPos:
+            h: 8
+            w: 8
+            x: 0
+            y: 8
+          targets:
+            - expr: pg_stat_database_blks_hit{datname="synthesis"} / (pg_stat_database_blks_hit{datname="synthesis"} + pg_stat_database_blks_read{datname="synthesis"})
+          min: 0
+          max: 1
+          unit: percentunit
+          showThresholdLabels: false
+          showThresholdMarkers: true
+          thresholds:
+            - value: null
+              color: red
+            - value: 0.8
+              color: orange
+            - value: 0.95
+              color: green
+        
+        # Slow Queries
+        - title: Slow Queries
+          type: graph
+          gridPos:
+            h: 8
+            w: 8
+            x: 8
+            y: 8
+          targets:
+            - expr: rate(synthesis_db_slow_queries_total[5m])
+          unit: qps
+          yAxis:
+            label: Queries per second
+        
+        # Database Size
+        - title: Database Size
+          type: graph
+          gridPos:
+            h: 8
+            w: 8
+            x: 16
+            y: 8
+          targets:
+            - expr: pg_database_size_bytes{datname="synthesis"} / 1024 / 1024 / 1024
+              legend: "Database Size"
+          unit: GB
+          yAxis:
+            label: Size (GB)
+        
+        # Table Sizes
+        - title: Table Sizes
+          type: graph
+          gridPos:
+            h: 8
+            w: 12
+            x: 0
+            y: 16
+          targets:
+            - expr: pg_tables_size / 1024 / 1024
+              legend: "{{table}}"
+          unit: MiB
+          yAxis:
+            label: Size (MiB)
+        
+        # Index Sizes
+        - title: Index Sizes
+          type: graph
+          gridPos:
+            h: 8
+            w: 12
+            x: 12
+            y: 16
+          targets:
+            - expr: pg_indexes_size / 1024 / 1024
+              legend: "{{index}}"
+          unit: MiB
+          yAxis:
+            label: Size (MiB)
+        
+        # Query Performance
+        - title: Query Performance
+          type: table
+          gridPos:
+            h: 10
+            w: 24
+            x: 0
+            y: 24
+          targets:
+            - expr: topk(10, avg by (query_type) (rate(pg_stat_statements_total_time[5m]) / rate(pg_stat_statements_calls[5m])))
+              instant: true
+    
+    # Synthesis Process Dashboard
+    - title: Synthesis Process Details
+      uid: synthesis-process
+      description: Detailed metrics about the synthesis process
+      tags:
+        - synthesis
+        - process
+      folder: Synthesis Monitoring
+      panels:
+        # Explanation Tree Size by Level
+        - title: Explanation Tree Size by Level
+          type: graph
+          gridPos:
+            h: 8
+            w: 12
+            x: 0
+            y: 0
+          targets:
+            - expr: avg by (explanation_level) (rate(synthesis_explanation_tree_size_sum[1h]) / rate(synthesis_explanation_tree_size_count[1h]))
+              legend: "Level {{explanation_level}}"
+          unit: nodes
+          yAxis:
+            label: Average Tree Size (nodes)
+        
+        # Decomposition Usage
+        - title: Decomposition Level Distribution
+          type: graph
+          gridPos:
+            h: 8
+            w: 12
+            x: 12
+            y: 0
+          targets:
+            - expr: count by (explanation_level) (synthesis_job_duration_seconds_count)
+              legend: "Level {{explanation_level}}"
+          unit: none
+          yAxis:
+            label: Job Count
+        
+        # Success Rate by Explanation Level
+        - title: Success Rate by Explanation Level
+          type: graph
+          gridPos:
+            h: 8
+            w: 12
+            x: 0
+            y: 8
+          targets:
+            - expr: sum by (explanation_level) (rate(synthesis_success_total[24h])) / sum by (explanation_level) (rate(synthesis_attempts_total[24h]))
+              legend: "Level {{explanation_level}}"
+          unit: percentunit
+          yAxis:
+            label: Success Rate
+        
+        # Synthesis Time Distribution
+        - title: Synthesis Time Distribution
+          type: heatmap
+          gridPos:
+            h: 8
+            w: 12
+            x: 12
+            y: 8
+          targets:
+            - expr: sum(rate(synthesis_job_duration_seconds_bucket[1h])) by (le, language)
+          yAxisUnit: s
+        
+        # Process Info
+        - title: Process Information
+          type: text
+          gridPos:
+            h: 4
+            w: 24
+            x: 0
+            y: 16
+          mode: markdown
+          content: |
+            ## Synthesis Process
+            
+            The synthesis process involves the following steps:
+            
+            1. **Parsing examples and constraints**
+            2. **Selecting appropriate explanation level**
+            3. **Building explanation trees**
+            4. **Applying decomposition based on composability**
+            5. **Synthesizing program structures**
+            6. **Refining and optimizing the synthesized program**
+        
+        # Program Complexity by Language
+        - title: Program Complexity by Language
+          type: graph
+          gridPos:
+            h: 8
+            w: 12
+            x: 0
+            y: 20
+          targets:
+            - expr: avg by (language) (rate(synthesis_program_complexity_sum[24h]) / rate(synthesis_program_complexity_count[24h]))
+              legend: "{{language}}"
+          unit: none
+          yAxis:
+            label: Average Complexity
+        
+        # Queue Wait Time
+        - title: Queue Wait Time
+          type: graph
+          gridPos:
+            h: 8
+            w: 12
+            x: 12
+            y: 20
+          targets:
+            - expr: histogram_quantile(0.95, sum(rate(synthesis_queue_wait_time_seconds_bucket[1h])) by (le))
+              legend: "95th Percentile"
+            - expr: histogram_quantile(0.50, sum(rate(synthesis_queue_wait_time_seconds_bucket[1h])) by (le))
+              legend: "Median"
+          unit: s
+          yAxis:
+            label: Wait Time (seconds)

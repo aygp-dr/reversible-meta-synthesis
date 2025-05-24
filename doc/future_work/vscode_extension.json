@@ -1,0 +1,54 @@
+{
+  "name": "reversible-meta-synthesis",
+  "displayName": "Reversible Meta-Synthesis",
+  "description": "Program synthesis through explanation-based learning",
+  "version": "0.1.0",
+  "engines": {
+    "vscode": "^1.70.0"
+  },
+  "categories": [
+    "Programming Languages",
+    "Machine Learning",
+    "Other"
+  ],
+  "activationEvents": [
+    "onCommand:reversible-meta-synthesis.synthesizeFromExamples",
+    "onCommand:reversible-meta-synthesis.synthesizeFromSelection",
+    "onCommand:reversible-meta-synthesis.explainSynthesis"
+  ],
+  "main": "./extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "reversible-meta-synthesis.synthesizeFromExamples",
+        "title": "Synthesize Program from Examples"
+      },
+      {
+        "command": "reversible-meta-synthesis.synthesizeFromSelection",
+        "title": "Synthesize Program from Selected Examples"
+      },
+      {
+        "command": "reversible-meta-synthesis.explainSynthesis",
+        "title": "Explain Synthesis Process"
+      }
+    ],
+    "configuration": {
+      "title": "Reversible Meta-Synthesis",
+      "properties": {
+        "reversible-meta-synthesis.defaultLanguage": {
+          "type": "string",
+          "default": "prolog",
+          "enum": ["prolog", "hy", "scheme", "clojure"],
+          "description": "Default language for program synthesis"
+        },
+        "reversible-meta-synthesis.explanationLevel": {
+          "type": "number",
+          "default": 1,
+          "minimum": 0,
+          "maximum": 3,
+          "description": "Explanation decomposition level (0-3)"
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,37 @@
+# Configuration for Data Warehouse ETL process
+
+# Source Database (OLTP)
+source_db:
+  host: db.reversible-meta-synthesis.com
+  port: 5432
+  name: synthesis
+  user: etl_user
+  password: "YOUR_PASSWORD"
+
+# Data Warehouse (OLAP)
+data_warehouse:
+  host: dw.reversible-meta-synthesis.com
+  port: 5432
+  name: synthesis_dw
+  user: dw_admin
+  password: "YOUR_DW_PASSWORD"
+
+# ETL Configuration
+etl:
+  batch_size: 10000       # Number of records to process at once
+  history_days: 365       # Number of days of history to process
+  schedule: "0 2 * * *"   # Daily at 2 AM
+
+# Reporting Configuration
+reporting:
+  output_dir: /var/data/synthesis/reports
+  formats:
+    - csv
+    - json
+  schedule: "0 6 * * *"   # Daily at 6 AM
+
+# Logging Configuration
+logging:
+  level: INFO
+  file: /var/log/synthesis-dw-etl.log
+  retention_days: 30

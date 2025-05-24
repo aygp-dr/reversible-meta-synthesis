@@ -1,0 +1,108 @@
+# Alert Manager Configuration for Reversible Meta-Synthesis Service
+
+# Alertmanager URL
+alertmanager:
+  url: http://localhost:9093
+
+# Email Notification Configuration
+email:
+  smtp_host: smtp.example.com
+  smtp_port: 587
+  smtp_user: alerts@reversible-meta-synthesis.com
+  smtp_password: "YOUR_SMTP_PASSWORD"
+  from_email: alerts@reversible-meta-synthesis.com
+  use_tls: true
+  recipients:
+    critical:
+      - team-oncall@reversible-meta-synthesis.com
+      - admin@reversible-meta-synthesis.com
+    warning:
+      - team@reversible-meta-synthesis.com
+    default:
+      - monitoring@reversible-meta-synthesis.com
+
+# Slack Notification Configuration
+slack:
+  webhook_url: https://hooks.slack.com/services/YOUR_SLACK_WEBHOOK
+  username: Synthesis Alert Bot
+  icon_emoji: :robot_face:
+  channels:
+    critical: "#alerts-critical"
+    warning: "#alerts-warning"
+    default: "#alerts"
+
+# PagerDuty Notification Configuration
+pagerduty:
+  integration_key: YOUR_PAGERDUTY_INTEGRATION_KEY
+  send_non_critical: false
+
+# Notification Configuration by Severity
+notifications:
+  critical:
+    methods:
+      - email
+      - slack
+      - pagerduty
+    send_resolved: true
+  
+  warning:
+    methods:
+      - email
+      - slack
+    send_resolved: true
+  
+  info:
+    methods:
+      - slack
+    send_resolved: false
+  
+  default:
+    methods:
+      - email
+    send_resolved: false
+
+# Alert Thresholds
+thresholds:
+  synthesis_time:
+    critical: 600  # 10 minutes
+    warning: 300   # 5 minutes
+  
+  success_rate:
+    critical: 0.7  # 70%
+    warning: 0.8   # 80%
+  
+  queue_size:
+    critical: 50
+    warning: 20
+  
+  queue_wait_time:
+    critical: 300  # 5 minutes
+    warning: 120   # 2 minutes
+  
+  cpu_usage:
+    critical: 90   # 90%
+    warning: 75    # 75%
+  
+  memory_usage:
+    critical: 90   # 90%
+    warning: 80    # 80%
+
+# Custom Alert Rules
+custom_rules:
+  - name: LongRunningSynthesisJob
+    expr: "synthesis_job_duration_seconds > 600"
+    severity: warning
+    summary: "Long-running synthesis job"
+    description: "A synthesis job has been running for more than 10 minutes"
+  
+  - name: SynthesisFailureStreak
+    expr: "count(synthesis_attempts_total) - count(synthesis_success_total) > 5"
+    severity: critical
+    summary: "Multiple synthesis failures in a row"
+    description: "More than 5 consecutive synthesis jobs have failed"
+  
+  - name: DailySuccessRateDrop
+    expr: "avg_over_time(synthesis_success_rate[1d]) < 0.8"
+    severity: warning
+    summary: "Daily synthesis success rate below target"
+    description: "The average synthesis success rate over the past day has dropped below 80%"

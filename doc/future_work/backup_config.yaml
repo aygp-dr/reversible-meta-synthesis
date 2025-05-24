@@ -1,0 +1,45 @@
+# Configuration for database backup and restore
+
+# S3 Configuration
+s3:
+  bucket: reversible-meta-synthesis-backups
+  prefix: db-backups
+  region: us-west-2
+  access_key: "YOUR_ACCESS_KEY"
+  secret_key: "YOUR_SECRET_KEY"
+
+# Database Configuration
+database:
+  host: db.reversible-meta-synthesis.com
+  port: 5432
+  name: synthesis
+  user: backup_user
+  password: "YOUR_PASSWORD"
+
+# Local Configuration
+local:
+  backup_dir: /var/backups/synthesis
+  keep_local: false
+
+# Retention Policy (in days)
+retention:
+  daily: 7
+  weekly: 30
+  monthly: 365
+
+# Backup Schedule
+schedule:
+  daily: "01:00"     # Daily at 1 AM
+  weekly_day: "0"    # Sunday
+  weekly: "02:00"    # Weekly at 2 AM
+  monthly_day: "1"   # 1st of month
+  monthly: "03:00"   # Monthly at 3 AM
+
+# Replication Configuration
+replication:
+  user: replication_user
+  password: "YOUR_REPLICATION_PASSWORD"
+
+# Notification Configuration
+notifications:
+  sns_topic_arn: "arn:aws:sns:us-west-2:123456789012:synthesis-db-alerts"
