@@ -12,8 +12,9 @@ This repository implements the concepts from the seminal paper on using reversib
 
 ## Implementations
 
-Three implementations are provided:
+Four implementations are provided:
 - **Prolog**: The original language used in the paper, providing the most faithful implementation
+- **Clojure**: Modern Lisp on the JVM with rich data structures and concurrency support
 - **Hy**: A Lisp dialect embedded in Python, bridging functional and imperative paradigms
 - **Scheme**: A minimalist Lisp implementation focusing on core concepts
 
@@ -28,36 +29,50 @@ The repository includes implementations of several examples from the paper:
 ## Getting Started
 
 1. Clone this repository
-2. Run the appropriate installation script for your platform:
+2. Install the required languages:
+   - **Clojure**: Install [Clojure CLI tools](https://clojure.org/guides/getting_started)
+   - **Hy**: `pip install hy`
+   - **Scheme**: Install [GNU Guile](https://www.gnu.org/software/guile/)
+   - **Prolog**: Install [SWI-Prolog](https://www.swi-prolog.org/) (optional)
+
+3. Test all implementations:
+   ```bash
+   ./test_all.sh
    ```
-   # Linux
-   ./install-linux.sh
+
+4. Or run examples individually:
+   ```bash
+   # Clojure
+   clojure -M:run examples
    
-   # FreeBSD
-   ./install-freebsd.sh
+   # Hy
+   hy examples/hy/append_example.hy
    
-   # macOS
-   ./install-macos.sh
+   # Scheme
+   guile examples/scheme/append-example.scm
+   
+   # Prolog (if available)
+   swipl -q -t "test_append, halt" -f reversible-interpreter.pl
    ```
-3. Explore the examples in the `examples` directory
 
 ## Directory Structure
 
 ```
 .
-├── doc/                  # Documentation
-├── examples/             # Example programs
-│   ├── prolog/
+├── src/                           # Source code
+│   ├── reversible_meta_synthesis/ # Clojure implementation  
+│   ├── hy/                        # Hy implementation
+│   ├── scheme/                    # Scheme implementation
+│   ├── prolog/                    # Prolog implementation
+│   └── api/                       # HTTP API server
+├── examples/                      # Working examples
+│   ├── clojure/
 │   ├── hy/
-│   └── scheme/
-├── src/                  # Source code
-│   ├── prolog/
-│   ├── hy/
-│   └── scheme/
-└── tests/                # Tests
-    ├── prolog/
-    ├── hy/
-    └── scheme/
+│   ├── scheme/
+│   └── prolog/
+├── tests/                         # Test suites
+├── reversible-interpreter.pl      # Standalone Prolog implementation
+└── test_all.sh                   # Test runner for all languages
 ```
 
 ## References
