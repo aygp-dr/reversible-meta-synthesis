@@ -13,14 +13,14 @@
 
 ;; Predicates for syntax
 (defn variable? [x]
-  (and (symbol? x) (str/starts-with? (name x) "*")))
+  (and (keyword? x) (str/starts-with? (name x) "*")))
 
 (defn constant? [x]
-  (and (symbol? x) (str/starts-with? (name x) "/")))
+  (and (keyword? x) (str/starts-with? (name x) "/")))
 
 (defn real-value [x]
   (if (constant? x)
-    (symbol (subs (name x) 1))
+    (keyword (subs (name x) 1))
     x))
 
 ;; Core reversible interpreter
@@ -55,6 +55,8 @@
 
 (defn find-matching-clauses [clauses goal]
   (filter #(match-head (:head %) (first goal)) clauses))
+
+(declare eval-body)
 
 (defn eval-goal 
   "Evaluate a goal against a set of clauses with the current environment"

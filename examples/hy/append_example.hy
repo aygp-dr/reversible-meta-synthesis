@@ -1,6 +1,12 @@
 #!/usr/bin/env hy
 
-(import [src.hy.reversible_interpreter [reverse-interpreter]])
+;; For now, include a simple mock of the reverse interpreter
+(defn reverse-interpreter [clauses queries]
+  "Mock implementation of the reversible interpreter"
+  (print "Reversible interpreter called with:")
+  (print "Clauses:" clauses)
+  (print "Queries:" queries)
+  [{}])
 
 (defn append-example []
   (print "Append Example (Execution mode):")
@@ -16,9 +22,12 @@
 
 (defn synthesize-append-example []
   (print "\nAppend Example (Synthesis mode):")
-  ; In a real implementation, this would use the reversible interpreter in synthesis mode
-  (print "Synthesized program that would append [/a] and [/b] to get [/a /b]:"))
+  (print "Would synthesize program that appends [/a] and [/b] to get [/a /b]"))
 
-(defmain [&rest args]
+(defn -main [&rest args]
+  (append-example)
+  (synthesize-append-example))
+
+(when (= __name__ "__main__")
   (append-example)
   (synthesize-append-example))

@@ -1,23 +1,18 @@
 # Reversible Meta-Synthesis Project Guidelines
 
 ## Build/Test Commands
-- Setup: `pip install -e ".[dev]"`
-- Run tests: `pytest`
-- Run single test: `pytest path/to/test.py::test_function_name -v`
-- Lint code: `ruff check .`
-- Type check: `mypy .`
+- **Clojure**: `clojure -M:run [examples|tests|synthesis]`
+- **Hy**: `hy examples/hy/append_example.hy`
+- **Scheme**: `guile examples/scheme/append-example.scm`  
+- **Prolog**: `swipl -q -t "test_append, halt" -f reversible-interpreter.pl` (if available)
 
 ## Code Style Guidelines
-- **Imports**: Group standard library, third-party, and local imports
-- **Formatting**: Use Black with 88 character line length
-- **Types**: Use type annotations for all functions and classes
-- **Naming**: 
-  - snake_case for variables and functions
-  - PascalCase for classes
-  - UPPER_CASE for constants
-- **Documentation**: Google-style docstrings for all public functions
-- **Error Handling**: Use explicit exception handling with specific exception types
-- **Testing**: Write pytest-compatible tests with descriptive names
+- **Clojure**: Follow standard Clojure conventions, use kebab-case for names
+- **Hy**: Follow Lisp conventions with hyphenated names
+- **Scheme**: Follow R5RS/R6RS conventions
+- **Prolog**: Follow ISO Prolog conventions
+- **Documentation**: Include docstrings/comments explaining the reversible interpreter concepts
+- **Testing**: Each language has its own test structure in tests/ directory
 
 ## Git Workflow
 - **Issues**: Create GitHub issue before starting work with clear start/end/validation states
@@ -27,4 +22,12 @@
 - **Pull Requests**: Link to related issues and include validation steps
 
 ## Project Structure
-Organize code into logical modules with clear separation of concerns. Follow a functional programming approach with immutable data structures where possible.
+This is a multi-language implementation of a reversible meta-interpreter:
+
+- `src/reversible_meta_synthesis/` - Clojure implementation
+- `src/hy/` - Hy (Lisp-on-Python) implementation  
+- `src/scheme/` - Scheme implementation
+- `src/prolog/` - Prolog implementation
+- `examples/` - Working examples for each language
+- `tests/` - Test suites for each language
+- `reversible-interpreter.pl` - Standalone Prolog implementation

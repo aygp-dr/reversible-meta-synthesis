@@ -1,4 +1,5 @@
-#!/usr/bin/env scheme
+#!/usr/bin/guile
+!#
 #|
 Reversible Meta-Interpreter in Scheme
 Based on the Prolog implementation from "Inductive Program Synthesis by Using 

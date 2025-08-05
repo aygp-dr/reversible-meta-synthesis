@@ -1,4 +1,5 @@
-#!/usr/bin/env scheme
+#!/usr/bin/guile
+!#
 (load "../../src/scheme/reversible-interpreter.scm")
 
 ; Example of using the reversible interpreter to execute the append program
