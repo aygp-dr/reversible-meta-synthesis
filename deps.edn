@@ -1,14 +1,19 @@
 {:paths ["src"]
  :deps {org.clojure/clojure {:mvn/version "1.11.1"}}
- 
+
  :aliases
- {:test {:extra-paths ["test/clojure"]
-         :extra-deps {org.clojure/test.check {:mvn/version "1.1.1"}}}
-  
+ {:test {:extra-paths ["tests/clojure"]
+         :extra-deps {org.clojure/test.check {:mvn/version "1.1.1"}
+                      io.github.cognitect-labs/test-runner
+                      {:git/tag "v0.5.1" :git/sha "dfb30dd"}}
+         :main-opts ["-m" "cognitect.test-runner" "-d" "tests/clojure"]
+         :exec-fn cognitect.test-runner.api/test
+         :exec-args {:dirs ["tests/clojure"]}}
+
   :run {:main-opts ["-m" "reversible-meta-synthesis.core"]}
-  
+
   :examples {:extra-paths ["examples/clojure"]
              :extra-deps {}}
-  
+
   :build {:deps {io.github.clojure/tools.build {:git/tag "v0.8.3" :git/sha "0d20256"}}
           :ns-default build}}}

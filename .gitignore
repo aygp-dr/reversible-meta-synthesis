@@ -1,0 +1,14 @@
+# Clojure
+.cpcache/
+.clj-kondo/
+.lsp/
+
+# Python / Hy
+__pycache__/
+*.pyc
+
+# Guile / Scheme bytecode
+*.go
+
+# Claude Code worktrees
+worktrees/

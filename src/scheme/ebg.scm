@@ -1,4 +1,5 @@
 #!/usr/bin/env scheme
+!#
 
 ; Explanation tree structure
 (define (make-explanation-node goal children)
