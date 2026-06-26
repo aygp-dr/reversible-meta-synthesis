@@ -5,6 +5,7 @@
 (load "../../src/scheme/ebg.scm")
 
 ;; Simple test framework
+(define failure-count 0)
 (define (assert-equal expected actual message)
   (if (equal? expected actual)
       (begin
@@ -12,6 +13,7 @@
         (display message)
         (newline))
       (begin
+        (set! failure-count (+ failure-count 1))
         (display "FAIL: ")
         (display message)
         (newline)
@@ -71,3 +73,9 @@
   (display "\nAll tests completed.\n"))
 
 (run-all-tests)
+;; Exit non-zero if any assertion failed so `gmake test-scheme` reflects reality.
+(when (> failure-count 0)
+  (display "\n")
+  (display failure-count)
+  (display " test(s) failed.\n")
+  (exit 1))
