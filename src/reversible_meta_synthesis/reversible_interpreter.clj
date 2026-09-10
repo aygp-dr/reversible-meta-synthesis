@@ -36,21 +36,21 @@
        (if val
          (if (= val term) env nil)
          (extend-env env pattern term)))
-     
+
      (constant? pattern)
      (if (= (real-value pattern) term) env nil)
-     
+
      (and (sequential? pattern) (sequential? term) (= (count pattern) (count term)))
-     (reduce 
-       (fn [env' [p t]] 
-         (if env'
-           (match-head p t env')
-           (reduced nil)))
-       env
-       (map vector pattern term))
-     
+     (reduce
+      (fn [env' [p t]]
+        (if env'
+          (match-head p t env')
+          (reduced nil)))
+      env
+      (map vector pattern term))
+
      (= pattern term) env
-     
+
      :else nil)))
 
 (defn find-matching-clauses [clauses goal]
@@ -58,7 +58,7 @@
 
 (declare eval-body)
 
-(defn eval-goal 
+(defn eval-goal
   "Evaluate a goal against a set of clauses with the current environment"
   [goal env clauses]
   (let [matching (find-matching-clauses clauses goal)]
@@ -75,12 +75,12 @@
       (eval-body (rest body) new-env clauses))))
 
 ;; Main interpreter functions
-(defn create-clause 
+(defn create-clause
   "Create a clause from head and body"
   [head body]
   (->Clause head body))
 
-(defn prolog 
+(defn prolog
   "Main function for the reversible interpreter.
    In execution mode: given clauses and queries, returns results.
    In synthesis mode: given queries and expected results, returns clauses."
@@ -89,7 +89,7 @@
     (map #(eval-goal % (make-env) clause-records) queries)))
 
 ;; Synthesis mode
-(defn synthesize 
+(defn synthesize
   "Program synthesis from examples"
   [examples]
   (let [query-value-pairs (map (fn [[q v]] [q v]) examples)]

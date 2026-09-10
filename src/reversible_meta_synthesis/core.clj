@@ -10,12 +10,12 @@
   (println "An implementation of \"Inductive Program Synthesis by Using")
   (println "a Reversible Meta-Interpreter\" by Numao and Shimura")
   (println)
-  
+
   (println "Available commands:")
   (println "  examples  - Run example programs")
   (println "  tests     - Run tests")
   (println "  synthesis - Run program synthesis demos")
-  
+
   (when (seq args)
     (case (first args)
       "examples" (do

@@ -21,19 +21,19 @@
 (deftest eval-goal-test
   (testing "Evaluating goals against clauses"
     (let [clauses [(ri/create-clause ['append [] '*l '*l] [])
-                   (ri/create-clause ['append ['*x '& '*l1] '*l2 ['*x '& '*l3]] 
+                   (ri/create-clause ['append ['*x '& '*l1] '*l2 ['*x '& '*l3]]
                                      [['append '*l1 '*l2 '*l3]])]]
-      
-      (is (ri/eval-goal ['append [] ['/a '/b] '*ans] {} clauses) 
+
+      (is (ri/eval-goal ['append [] ['/a '/b] '*ans] {} clauses)
           "Base case should match")
-      
-      (is (= {'*l ['/a '/b] '*ans ['/a '/b]} 
+
+      (is (= {'*l ['/a '/b] '*ans ['/a '/b]}
              (ri/eval-goal ['append [] ['/a '/b] '*ans] {} clauses))
           "Environment should contain correct bindings")
-      
+
       (is (ri/eval-goal ['append ['/a] ['/b] '*ans] {} clauses)
           "Recursive case should match")
-      
+
       (is (= {'*ans ['/a '/b]}
              (ri/eval-goal ['append ['/a] ['/b] '*ans] {} clauses))
           "Recursive evaluation should return correct result"))))
@@ -41,12 +41,12 @@
 (deftest prolog-test
   (testing "Full prolog execution"
     (let [clauses [[['append [] '*l '*l] []]
-                   [['append ['*x '& '*l1] '*l2 ['*x '& '*l3]] 
+                   [['append ['*x '& '*l1] '*l2 ['*x '& '*l3]]
                     [['append '*l1 '*l2 '*l3]]]]
-          
+
           queries [[['append ['/a '/b] ['/c '/d] '*ans]]]
           expected-results [{'*ans ['/a '/b '/c '/d]}]]
-      
+
       (is (= expected-results (ri/prolog clauses queries))
           "Prolog should return correct results for queries"))))
 

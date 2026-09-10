@@ -64,13 +64,13 @@
 ;; Convert JSON back to explanation tree
 (defn json->explanation [{:keys [goal children]}]
   (ebg/->ExplanationNode
-    (json->term goal)
-    (mapv json->explanation children)))
+   (json->term goal)
+   (mapv json->explanation children)))
 
 ;; Call external implementation via HTTP
 (defn call-external [language function input]
   (let [url (str "http://localhost:8080/api/" language "/" function)
-        response (http/post url 
+        response (http/post url
                             {:body (json/write-str input)
                              :content-type :json
                              :accept :json})]

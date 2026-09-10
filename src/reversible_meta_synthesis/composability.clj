@@ -34,7 +34,7 @@
         (doseq [goal body]
           (let [goal-pred (if (sequential? goal) (first goal) goal)]
             (swap! dependencies update head-pred (fnil conj #{}) goal-pred)))))
-    
+
     ;; Calculate composability based on dependency structure
     (let [dep-graph @dependencies
           predicates (keys dep-graph)
@@ -54,5 +54,5 @@
                         (swap! depth inc))))]
             (calculate-depth pred)
             (swap! composability assoc pred @depth))))
-      
+
       @composability)))

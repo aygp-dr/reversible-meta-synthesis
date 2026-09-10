@@ -16,9 +16,9 @@
       (make-explanation-node goal [])
       (let [clause (first matching-clauses)
             matched-env (ri/match-head (:head clause) goal)]
-        (make-explanation-node 
-          goal
-          (mapv #(build-explanation % clauses) (:body clause)))))))
+        (make-explanation-node
+         goal
+         (mapv #(build-explanation % clauses) (:body clause)))))))
 
 ;; Generalization
 (defn generalize-term
@@ -34,8 +34,8 @@
   "Generalize an explanation tree"
   [expl-tree]
   (make-explanation-node
-    (generalize-term (:goal expl-tree))
-    (mapv generalize-explanation (:children expl-tree))))
+   (generalize-term (:goal expl-tree))
+   (mapv generalize-explanation (:children expl-tree))))
 
 ;; Decomposition based on composability
 (defn decompose-explanation
@@ -45,7 +45,7 @@
         comp-value (get composability goal)
         should-decompose (and comp-value (<= comp-value decomp-force))]
     (if should-decompose
-      (mapcat #(decompose-explanation % composability decomp-force) 
+      (mapcat #(decompose-explanation % composability decomp-force)
               (:children explanation))
       [explanation])))
 
