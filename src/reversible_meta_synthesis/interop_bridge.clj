@@ -4,6 +4,10 @@
             [reversible-meta-synthesis.reversible-interpreter :as ri]
             [reversible-meta-synthesis.ebg :as ebg]))
 
+;; Defined below the fns that call them.
+(declare clause->json json->clause term->json json->term
+         explanation->json json->explanation)
+
 ;; Convert a program to JSON
 (defn export-program [clauses]
   (mapv clause->json clauses))
