@@ -1,15 +1,15 @@
 #!/usr/bin/env hy
 
-(import [unittest [TestCase main]])
-(import [src.hy.interop_bridge [
-    export-program 
+(import unittest [TestCase main])
+(import src.hy.interop_bridge [
+    export-program
     import-program
     export-explanation
     import-explanation
     term-to-json
     json-to-term
-]])
-(import [src.hy.ebg [ExplanationNode]])
+])
+(import src.hy.ebg [ExplanationNode])
 
 (defclass InteropBridgeTests [TestCase]
   (defn test-export-import-program [self]

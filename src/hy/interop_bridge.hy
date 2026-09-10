@@ -1,9 +1,9 @@
 #!/usr/bin/env hy
 
-(import [json])
-(import [requests])
-(import [src.hy.reversible_interpreter [Interpreter variable? constant?]])
-(import [src.hy.ebg [ExplanationNode]])
+(import json)
+(import requests)
+(import src.hy.reversible_interpreter [Interpreter variable? constant?])
+(import src.hy.ebg [ExplanationNode])
 
 (defn export-program [clauses]
   "Convert a program (list of clauses) to JSON"
