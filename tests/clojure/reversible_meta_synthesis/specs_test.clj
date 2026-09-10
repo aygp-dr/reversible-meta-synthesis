@@ -27,14 +27,8 @@
     `append/-main                         ; prints
     `reversible-meta-synthesis.core/-main}) ; prints, loads namespaces
 
-;; Real bugs found by stest/check; each is fixed in its own fix: commit.
-;; TODO(spec): (find-matching-clauses [(create-clause '[p] [])] '[p]) ;=> ()
-;;   heads are matched against (first goal), the predicate symbol alone.
-(def ^:private known-bugs
-  #{`ri/find-matching-clauses})
-
 (defn- checkable []
-  (remove (into side-effecting known-bugs) (stest/enumerate-namespace api-nses)))
+  (remove side-effecting (stest/enumerate-namespace api-nses)))
 
 (deftest fdefs-hold-under-generative-testing
   (let [results (stest/check (checkable) check-opts)]

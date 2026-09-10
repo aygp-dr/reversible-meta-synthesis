@@ -95,7 +95,7 @@
   :fn specs/extends-env?)
 
 (defn find-matching-clauses [clauses goal]
-  (filter #(match-head (:head %) (first goal)) clauses))
+  (filter #(match-head (:head %) goal) clauses))
 
 (s/fdef find-matching-clauses
   :args ::specs/match-args
