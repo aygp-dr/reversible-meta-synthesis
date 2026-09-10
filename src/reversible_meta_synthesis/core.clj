@@ -1,7 +1,8 @@
 (ns reversible-meta-synthesis.core
   (:require [reversible-meta-synthesis.reversible-interpreter :as ri]
             [reversible-meta-synthesis.ebg :as ebg]
-            [reversible-meta-synthesis.composability :as comp])
+            [reversible-meta-synthesis.composability :as comp]
+            [clojure.spec.alpha :as s])
   (:gen-class))
 
 (defn -main [& args]
@@ -28,3 +29,6 @@
                     (require 'reversible-meta-synthesis.examples.app3-merge3)
                     (apply (resolve 'reversible-meta-synthesis.examples.app3-merge3/-main) (rest args)))
       (println "Unknown command:" (first args)))))
+
+(s/fdef -main
+  :args (s/* string?))

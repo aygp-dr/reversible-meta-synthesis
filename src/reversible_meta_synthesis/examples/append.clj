@@ -1,5 +1,6 @@
 (ns reversible-meta-synthesis.examples.append
-  (:require [reversible-meta-synthesis.reversible-interpreter :as ri]))
+  (:require [clojure.spec.alpha :as s]
+            [reversible-meta-synthesis.reversible-interpreter :as ri]))
 
 ;; Define the append program using proper Clojure data structures
 (def append-clauses
@@ -16,6 +17,10 @@
     (println "Query:" queries)
     (println "Result:" (first results))))
 
+(s/fdef example-execution
+  :args (s/cat)
+  :ret nil?)
+
 (defn example-synthesis []
   (println "\nSynthesizing append program from examples:")
 
@@ -26,6 +31,13 @@
     (println "Examples:" examples)
     (println "Synthesized program:" synthesized)))
 
+(s/fdef example-synthesis
+  :args (s/cat)
+  :ret nil?)
+
 (defn -main [& args]
   (example-execution)
   (example-synthesis))
+
+(s/fdef -main
+  :args (s/* string?))
