@@ -1,14 +1,34 @@
 {:paths ["src"]
- :deps {org.clojure/clojure {:mvn/version "1.11.1"}}
- 
+ :deps {org.clojure/clojure    {:mvn/version "1.12.6"}
+        org.clojure/spec.alpha {:mvn/version "0.5.238"}}
+
  :aliases
- {:test {:extra-paths ["test/clojure"]
-         :extra-deps {org.clojure/test.check {:mvn/version "1.1.1"}}}
-  
+ {;; REPL: clj -M:dev  (dev/user.clj instruments all s/fdef'd fns)
+  :dev  {:extra-paths ["dev" "tests/clojure"]
+         :extra-deps {org.clojure/test.check {:mvn/version "1.1.3"}}}
+
+  ;; bb test  ->  clojure -M:test
+  ;; Each language keeps its tests under tests/<language>/.
+  :test {:extra-paths ["tests/clojure"]
+         :extra-deps {org.clojure/test.check {:mvn/version "1.1.3"}
+                      io.github.cognitect-labs/test-runner
+                      {:git/tag "v0.5.1" :git/sha "dfb30dd"}}
+         :main-opts ["-m" "cognitect.test-runner" "-d" "tests/clojure"]
+         :exec-fn cognitect.test-runner.api/test
+         :exec-args {:dirs ["tests/clojure"]}}
+
+  ;; bb lint  ->  clojure -M:lint --lint src tests/clojure dev
+  :lint {:replace-deps {clj-kondo/clj-kondo {:mvn/version "2026.08.04"}}
+         :main-opts ["-m" "clj-kondo.main"]}
+
+  ;; bb fmt / bb fmt:fix  ->  clojure -M:fmt check|fix src tests/clojure dev
+  :fmt  {:replace-deps {dev.weavejester/cljfmt {:mvn/version "0.16.5"}}
+         :main-opts ["-m" "cljfmt.main"]}
+
   :run {:main-opts ["-m" "reversible-meta-synthesis.core"]}
-  
+
   :examples {:extra-paths ["examples/clojure"]
              :extra-deps {}}
-  
+
   :build {:deps {io.github.clojure/tools.build {:git/tag "v0.8.3" :git/sha "0d20256"}}
           :ns-default build}}}

@@ -68,7 +68,7 @@ test-all:
 
 .PHONY: test-clojure
 test-clojure:
-	clojure -M:run tests
+	bb test
 
 .PHONY: test-hy
 test-hy:
