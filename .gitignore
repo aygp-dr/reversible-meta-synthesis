@@ -1,0 +1,17 @@
+# clojure standard v1
+.cpcache/
+.clj-kondo/.cache/
+.lsp/
+.nrepl-port
+.rebel_readline_history
+target/
+
+# Python / Hy
+__pycache__/
+*.pyc
+
+# Guile / Scheme bytecode
+*.go
+
+# Claude Code worktrees
+worktrees/

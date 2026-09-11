@@ -1,4 +1,6 @@
-(ns reversible-meta-synthesis.composability)
+(ns reversible-meta-synthesis.composability
+  (:require [clojure.spec.alpha :as s]
+            [reversible-meta-synthesis.specs :as specs]))
 
 ;; Composability values for different predicates
 (def composability-values
@@ -18,10 +20,18 @@
   (let [pred (if (sequential? goal) (first goal) goal)]
     (get composability-values pred 0)))
 
+(s/fdef get-composability
+  :args (s/cat :goal ::specs/term)
+  :ret nat-int?)
+
 (defn should-decompose?
   "Determine if a goal should be decomposed based on its composability"
   [goal decomp-force]
   (<= (get-composability goal) decomp-force))
+
+(s/fdef should-decompose?
+  :args (s/cat :goal ::specs/term :decomp-force int?)
+  :ret boolean?)
 
 ;; Analysis functions to automatically determine composability
 (defn analyze-dependencies
@@ -34,7 +44,7 @@
         (doseq [goal body]
           (let [goal-pred (if (sequential? goal) (first goal) goal)]
             (swap! dependencies update head-pred (fnil conj #{}) goal-pred)))))
-    
+
     ;; Calculate composability based on dependency structure
     (let [dep-graph @dependencies
           predicates (keys dep-graph)
@@ -54,5 +64,15 @@
                         (swap! depth inc))))]
             (calculate-depth pred)
             (swap! composability assoc pred @depth))))
-      
+
       @composability)))
+
+(s/fdef analyze-dependencies
+  :args (s/cat :clauses ::specs/program)
+  :ret (s/map-of any? pos-int?)
+  ;; one entry per predicate whose clauses have a body
+  :fn (fn [{{:keys [clauses]} :args ret :ret}]
+        (= (set (keys ret))
+           (set (keep (fn [[head body]]
+                        (when (seq body) (if (sequential? head) (first head) head)))
+                      clauses)))))

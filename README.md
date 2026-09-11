@@ -55,6 +55,29 @@ The repository includes implementations of several examples from the paper:
    swipl -q -t "test_append, halt" -f reversible-interpreter.pl
    ```
 
+## Clojure Development
+
+The Clojure implementation follows the aygp-dr Clojure standard: `deps.edn` is
+the canonical manifest and `bb.edn` provides the tasks.
+
+| Task | What it does |
+|---|---|
+| `bb test` | Clojure test suite (`clojure -M:test`; tests live in `tests/clojure`) |
+| `bb lint` | clj-kondo (fails on errors) |
+| `bb fmt` / `bb fmt:fix` | cljfmt check / fix |
+| `bb check` | lint + fmt + test (CI runs this) |
+
+Data specs live in `src/reversible_meta_synthesis/specs.clj`, and each public
+fn in the interpreter, `ebg`, `composability` and the entry points has an
+`s/fdef` right after its `defn` (see the
+[clojure.spec guide](https://clojure.org/guides/spec)).
+`tests/clojure/reversible_meta_synthesis/specs_test.clj` runs `stest/check`
+over every pure fn, and `clj -M:dev` instruments at the REPL.
+
+In the Clojure interpreter, variables are keywords named `*x` and constants
+are keywords named `/a`. The reader rejects `:/a` and `'/a`, so build
+constants with `(keyword "/a")`.
+
 ## Directory Structure
 
 ```

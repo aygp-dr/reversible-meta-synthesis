@@ -4,6 +4,10 @@
             [reversible-meta-synthesis.reversible-interpreter :as ri]
             [reversible-meta-synthesis.ebg :as ebg]))
 
+;; Defined below the fns that call them.
+(declare clause->json json->clause term->json json->term
+         explanation->json json->explanation)
+
 ;; Convert a program to JSON
 (defn export-program [clauses]
   (mapv clause->json clauses))
@@ -60,13 +64,13 @@
 ;; Convert JSON back to explanation tree
 (defn json->explanation [{:keys [goal children]}]
   (ebg/->ExplanationNode
-    (json->term goal)
-    (mapv json->explanation children)))
+   (json->term goal)
+   (mapv json->explanation children)))
 
 ;; Call external implementation via HTTP
 (defn call-external [language function input]
   (let [url (str "http://localhost:8080/api/" language "/" function)
-        response (http/post url 
+        response (http/post url
                             {:body (json/write-str input)
                              :content-type :json
                              :accept :json})]
